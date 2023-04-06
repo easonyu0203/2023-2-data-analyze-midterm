@@ -1,0 +1,7 @@
+/bda2023_mid_dataset/
+/preprocessed_dataset/*
+
+/.idea/
+/.vscode/
+/venv/
+.DS_STORE
