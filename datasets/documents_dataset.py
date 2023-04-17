@@ -16,6 +16,7 @@ class Document:
 
 class IDocumentsDataset(Protocol):
     """IDocumentsDataset is a protocol that defines the interface of a documents dataset."""
+
     def __getitem__(self, index: int) -> Document:
         ...
 
@@ -54,6 +55,14 @@ class DocumentsDataset(IDocumentsDataset):
                 columns=['title', 'author', 'content', 'post_time'])
             self.documents_df.set_index('post_time', inplace=True)
 
+    def query_by_time(self, start_time: datetime | str, end_time: datetime | str) -> List[Document]:
+        result_df = self.documents_df.loc[start_time:end_time]
+        documents = []
+        for _, row in result_df.iterrows():
+            document = Document(title=row['title'], author=row['author'], content=row['content'], post_time=row.name)
+            documents.append(document)
+        return documents
+
     def __getitem__(self, index) -> Document:
         row = self.documents_df.iloc[index]
 
@@ -73,13 +82,9 @@ class DocumentsDataset(IDocumentsDataset):
         self.current_index += 1
         return result
 
-    def query_by_time(self, start_time: datetime | str, end_time: datetime | str) -> List[Document]:
-        result_df = self.documents_df.loc[start_time:end_time]
-        documents = []
-        for _, row in result_df.iterrows():
-            document = Document(title=row['title'], author=row['author'], content=row['content'], post_time=row.name)
-            documents.append(document)
-        return documents
+    def __repr__(self):
+        """return the string representation of the DocumentsDataset size of dataset"""
+        return f"DocumentsDataset(size={len(self)})"
 
 
 if __name__ == "__main__":
