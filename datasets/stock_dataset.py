@@ -31,12 +31,14 @@ class Stock:
     """Stock is a class that contains a stock's name, id, and history."""
     name: str
     id: str
-    history: pd.DataFrame
+    history_df: pd.DataFrame
 
     def __init__(self, stock_name: str, stock_id: str, history_path: str):
         self.name = stock_name
         self.id = stock_id
-        self.history = pd.read_csv(history_path, index_col=0)
+        self.history_df = pd.read_csv(history_path)
+        self.history_df['date'] = pd.to_datetime(self.history_df['date'])
+        self.history_df.set_index('date', inplace=True)
 
     def __repr__(self):
         return f"Stock(name={self.name}, id={self.id})"

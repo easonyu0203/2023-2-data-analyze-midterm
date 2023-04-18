@@ -1,20 +1,12 @@
-from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Protocol
 
 import pandas as pd
 
-
-@dataclass
-class Document:
-    """Document is a class that contains a document's title, author, content, and post time."""
-    title: str
-    author: str
-    content: str
-    post_time: datetime
+from datasets.document import Document
 
 
-class IDocumentsDataset(Protocol):
+class IDocsDataset(Protocol):
     """IDocumentsDataset is a protocol that defines the interface of a documents dataset."""
 
     def __getitem__(self, index: int) -> Document:
@@ -31,7 +23,7 @@ class IDocumentsDataset(Protocol):
         ...
 
 
-class DocumentsDataset(IDocumentsDataset):
+class DocsDataset(IDocsDataset):
     """
     DocumentsDataset is a class that contains a dataset of documents.
     This dataset source can be pandas DataFrame, can supply by csv file or DataFrame, or can supply by document list.
@@ -47,7 +39,10 @@ class DocumentsDataset(IDocumentsDataset):
         if source_df is not None:
             self.documents_df = source_df
         elif documents_csv_path is not None:
-            self.documents_df = pd.read_csv(documents_csv_path, index_col=3)
+            self.documents_df = pd.read_csv(documents_csv_path)
+            self.documents_df['post_time'] = pd.to_datetime(self.documents_df['post_time'])
+            self.documents_df.set_index('post_time', inplace=True)
+
         elif document_list is not None:
             self.documents_df = pd.DataFrame(
                 data=[(document.title, document.author, document.content, document.post_time) for document in
@@ -55,7 +50,8 @@ class DocumentsDataset(IDocumentsDataset):
                 columns=['title', 'author', 'content', 'post_time'])
             self.documents_df.set_index('post_time', inplace=True)
 
-    def query_by_time(self, start_time: datetime | str, end_time: datetime | str) -> List[Document]:
+    def query_by_time(self, start_time: datetime | pd.Timestamp | str, end_time: datetime | pd.Timestamp | str) \
+            -> List[Document]:
         result_df = self.documents_df.loc[start_time:end_time]
         documents = []
         for _, row in result_df.iterrows():
@@ -88,5 +84,5 @@ class DocumentsDataset(IDocumentsDataset):
 
 
 if __name__ == "__main__":
-    documents_dataset = DocumentsDataset("../organized_data/documents.csv")
+    documents_dataset = DocsDataset("../organized_data/documents.csv")
     print(documents_dataset.documents_df)

@@ -1,23 +1,23 @@
 from typing import Protocol
-from datasets.documents_dataset import IDocumentsDataset, DocumentsDataset
+from datasets.docs_dataset import IDocsDataset, DocsDataset
 from datasets.stock_dataset import Stock
 
 
-class IDocumentsFilterer(Protocol):
+class IDocsFilterer(Protocol):
     """Filter documents that aren't relevant to the stock we are interested in."""
-    def filter_documents(self, documents: IDocumentsDataset, stock: Stock) -> IDocumentsDataset:
+    def filter_documents(self, documents: IDocsDataset, stock: Stock) -> IDocsDataset:
         """filter documents by relevant to the stock we are interested in."""
         ...
 
 
-class DefaultFilterer(IDocumentsFilterer):
+class DefaultFilterer(IDocsFilterer):
     """use whether doc title or content contains the stock name to filter documents"""
-    def filter_documents(self, documents: IDocumentsDataset, stock: Stock) -> IDocumentsDataset:
+    def filter_documents(self, documents: IDocsDataset, stock: Stock) -> IDocsDataset:
         stock_name = stock.name
         filtered_documents = []
         for document in documents:
             if stock_name in document.title or stock_name in document.content:
                 filtered_documents.append(document)
 
-        return DocumentsDataset(document_list=filtered_documents)
+        return DocsDataset(document_list=filtered_documents)
 
