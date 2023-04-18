@@ -23,6 +23,10 @@ class DefaultFilterer(IDocsFilterer):
             if stock_name in document.title or stock_name in document.content:
                 filtered_documents.append(document)
 
+        if verbose:
+            # print remaining count
+            print(f"left with {len(filtered_documents)} documents after filtering")
+
         return DocsDataset(document_list=filtered_documents)
 
 

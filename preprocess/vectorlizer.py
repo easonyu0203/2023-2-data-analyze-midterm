@@ -33,8 +33,12 @@ class TFIDFVectorlizer(IVectorlizer):
             doc = " ".join([' '.join([k] * int(w * 100)) for k, w in keywords])
             docs.append(doc)
 
+        if verbose:
+            print("tfidf vectorizer fitting...")
         # fit the vectorizer
         tfidf_matrix = self.vectorizer.fit_transform(docs)
         vectors = tfidf_matrix.toarray()
+        if verbose:
+            print("tfidf vectorizer fitted.")
 
         return LabelDataset(vectors, labeled_docs_keywords.labels)

@@ -36,6 +36,12 @@ class DefaultKeywordExtractor(IKeywordExtractor):
             assert doc.keywords is not None
             doc_keywords_list.append(doc.keywords)
 
+        # remove doc if keywords == []
+        doc_keywords_list = [doc_keywords for doc_keywords in doc_keywords_list if doc_keywords != []]
+        if verbose:
+            print(f"remove {len(labeled_docs) - len(doc_keywords_list)} docs because of empty keywords")
+            print("left with {} docs".format(len(doc_keywords_list)))
+
         return LabelDataset(doc_keywords_list, labeled_docs.labels)
 
 

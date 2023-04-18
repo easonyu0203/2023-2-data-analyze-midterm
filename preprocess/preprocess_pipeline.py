@@ -23,8 +23,6 @@ from preprocess.vectorlizer import IVectorlizer
 
 @dataclass
 class PreprocessPipeLineConfig:
-    docs_dataset: IDocsDataset
-    stock: Stock
     docs_filterer: IDocsFilterer
     docs_labeler: IDocsLabeler
     labeled_docs_filterer: ILabeledDocsFilterer
@@ -34,16 +32,18 @@ class PreprocessPipeLineConfig:
 
 class PreprocessPipeline:
 
-    def __init__(self, config: PreprocessPipeLineConfig):
+    def __init__(self, dataset: IDocsDataset, stock: Stock, config: PreprocessPipeLineConfig):
+        self.docs_dataset = dataset
+        self.stock = stock
         self.config = config
 
     def preprocess(self, verbose=True) -> ILabeledDataset:
         # filter documents
-        filtered_docs = self.config.docs_filterer.filter_documents(self.config.docs_dataset, self.config.stock,
+        filtered_docs = self.config.docs_filterer.filter_documents(self.docs_dataset, self.stock,
                                                                    verbose=verbose)
 
         # label documents
-        labeled_docs = self.config.docs_labeler.label_documents(filtered_docs, self.config.stock, verbose=verbose)
+        labeled_docs = self.config.docs_labeler.label_documents(filtered_docs, self.stock, verbose=verbose)
 
         # filter labeled documents
         filtered_labeled_docs = self.config.labeled_docs_filterer.filter_documents(labeled_docs, verbose=verbose)

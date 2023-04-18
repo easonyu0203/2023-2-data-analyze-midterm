@@ -29,4 +29,7 @@ class Near0returnFilterer(ILabeledDocsFilterer):
                 filtered_documents.append(document)
                 labels.append(label)
 
+        if verbose:
+            print(f"left with {len(filtered_documents)} documents after filtering")
+
         return LabelDataset(features=filtered_documents, labels=labels)
