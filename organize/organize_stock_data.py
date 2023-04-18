@@ -2,13 +2,13 @@
 # notebook we aim to do the following 1. make two Excel files one contain all 上市股票 other contain all 上櫃股票 2. separate
 # each stock to a sheet and order by time 3. rename column to english so will be easy to use in the future
 from typing import Dict
-import dotenv;
-
-dotenv.load_dotenv()
+import dotenv
 import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
 import os
+
+dotenv.load_dotenv()
 
 # change to project root directory
 folder_name = "organize"

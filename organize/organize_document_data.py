@@ -10,7 +10,9 @@ import pandas as pd
 from pathlib import Path
 from typing import Literal
 import os
-from dotenv import load_dotenv; load_dotenv()
+from dotenv import load_dotenv;
+
+load_dotenv()
 
 # change to project root directory
 folder_name = "organize"
@@ -18,8 +20,8 @@ if folder_name in os.getcwd():
     os.chdir(os.path.abspath(os.pardir))
 
 # configurations
-DATA_DIR = os.getenv("RAW_DATA_DIR") # "./bda2023_mid_dataset"
-ORGANIZED_DATASET_DIR = os.getenv("ORGANIZED_DATASET_DIR") # "./organized_data"
+DATA_DIR = os.getenv("RAW_DATA_DIR")  # "./bda2023_mid_dataset"
+ORGANIZED_DATASET_DIR = os.getenv("ORGANIZED_DATASET_DIR")  # "./organized_data"
 ORGANIZED_DATASET_NAME = "documents.csv"
 RAW_DATASET_NAMES = {
     'bbs_2019_2021': "bda2023_mid_bbs_2019-2021.csv",
@@ -102,7 +104,6 @@ article_df.set_index('post_time', inplace=True)
 if article_df.index.duplicated().any():
     # drop duplicates from the index
     article_df = article_df[~article_df.index.duplicated()]
-
 
 # the preprocessed data seem good, store it to csv
 print("saving...")
