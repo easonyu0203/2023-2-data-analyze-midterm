@@ -22,7 +22,7 @@ if folder_name in os.getcwd():
 # configurations
 DATA_DIR = os.getenv("RAW_DATA_DIR")  # "./bda2023_mid_dataset"
 ORGANIZED_DATASET_DIR = os.getenv("ORGANIZED_DATASET_DIR")  # "./organized_data"
-ORGANIZED_DATASET_NAME = "documents.csv"
+ORGANIZED_DATASET_NAME = os.getenv("DOCS_NAME")
 RAW_DATASET_NAMES = {
     'bbs_2019_2021': "bda2023_mid_bbs_2019-2021.csv",
     'bbs_2022_2023': "bda2023_mid_bbs_2022-2023.csv",
