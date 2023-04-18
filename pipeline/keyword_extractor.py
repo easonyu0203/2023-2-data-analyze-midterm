@@ -1,6 +1,6 @@
 from typing import Protocol, List, Tuple
 import jieba.analyse
-
+from tqdm import tqdm
 from datasets.docs_dataset import IDocsDataset
 from datasets.document import Document
 from datasets.labeled_docs_dataset import ILabeledDataset, LabelDataset
@@ -11,7 +11,7 @@ class IKeywordExtractor(Protocol):
     Extract keywords from documents. for each doc, we extract a list of keywords and their weights.
     this return a labeled dataset contain (x, y) where x is a list of pair(keyword, weight) and y is a float value.
     """
-    def extract_keywords(self, labeled_docs: ILabeledDataset) -> ILabeledDataset:
+    def extract_keywords(self, labeled_docs: ILabeledDataset, verbose=True) -> ILabeledDataset:
         """extract keywords from documents."""
         ...
 
@@ -27,10 +27,11 @@ class DefaultKeywordExtractor(IKeywordExtractor):
     def __init__(self, topK: int = None):
         self.topK = topK
 
-    def extract_keywords(self, labeled_docs: ILabeledDataset) -> ILabeledDataset:
+    def extract_keywords(self, labeled_docs: ILabeledDataset, verbose=True) -> ILabeledDataset:
 
         doc: Document
         doc_keywords: List[Tuple[str, float]] = []
+        labeled_docs = tqdm(labeled_docs, desc="extracting keywords", disable=not verbose)
         for doc, label in labeled_docs:
             doc_str = ";".join([doc.title, doc.author, doc.content])
             # extract the keywords

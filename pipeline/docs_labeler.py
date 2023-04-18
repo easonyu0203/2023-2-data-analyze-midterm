@@ -1,8 +1,7 @@
 from datetime import timedelta
 from typing import Protocol, List, Tuple, Hashable
-
 import pandas as pd
-
+from tqdm import tqdm
 from datasets.docs_dataset import IDocsDataset, DocsDataset
 from datasets.stock_dataset import Stock
 from datasets.labeled_docs_dataset import ILabeledDataset, LabelDataset
@@ -10,7 +9,7 @@ from datasets.labeled_docs_dataset import ILabeledDataset, LabelDataset
 
 class IDocsLabeler(Protocol):
     """Label documents to corresponding to the impact of future return percentage of the stock."""
-    def label_documents(self, documents: IDocsDataset, stock: Stock) -> ILabeledDataset:
+    def label_documents(self, documents: IDocsDataset, stock: Stock, verbose=True) -> ILabeledDataset:
         """label documents to corresponding to the impact of future return percentage of the stock."""
         ...
 
@@ -22,7 +21,7 @@ class DefaultDocsLabeler(IDocsLabeler):
         """s is the number of days in the future."""
         self.s = s
 
-    def label_documents(self, documents: IDocsDataset, stock: Stock) -> ILabeledDataset:
+    def label_documents(self, documents: IDocsDataset, stock: Stock, verbose=True) -> ILabeledDataset:
         """simply label document by the s day future return percentage of the stock."""
         # we don't want to alter original stock data
         stock_history = stock.history_df.copy()
@@ -32,7 +31,8 @@ class DefaultDocsLabeler(IDocsLabeler):
         labels = []
         documents_list = []
         date: pd.Timestamp
-        for date, stock_row in stock_history.iterrows():
+        stock_history_rows = tqdm(stock_history.iterrows(), desc="labeling documents", disable=not verbose)
+        for date, stock_row in stock_history_rows:
             # query documents that are posted within the same day as the stock
             queried_docs = documents.query_by_time(date, date + timedelta(days=1, seconds=-1))
             future_return = stock_row['future_return%']
