@@ -8,7 +8,9 @@ def store_generated_keywords(verbose=True):
     """using jieba to generate keywords for each document and store them in the database"""
     collection = connect_db()
 
-    pbar = tqdm(collection.find(), desc="generating keywords", disable=not verbose)
+    total_count = collection.count_documents({})
+    pbar = tqdm(collection.find(), total=total_count, desc="generating keywords", disable=not verbose)
+
     # for each document, extract the keywords and store them in the database
     for doc in pbar:
         if not doc['keywords']:
@@ -18,6 +20,7 @@ def store_generated_keywords(verbose=True):
             keywords = jieba.analyse.textrank(doc_str, topK=None, withWeight=True)
             # store the keywords
             collection.update_one({'_id': doc['_id']}, {'$set': {'keywords': keywords}})
+
 
 
 if __name__ == '__main__':
