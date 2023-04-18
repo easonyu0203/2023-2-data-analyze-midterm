@@ -1,5 +1,4 @@
 from typing import Protocol, List, Tuple
-import jieba.analyse
 from tqdm import tqdm
 from datasets.document import Document
 from datasets.labeled_docs_dataset import ILabeledDataset, LabelDataset
@@ -33,18 +32,9 @@ class DefaultKeywordExtractor(IKeywordExtractor):
 
         p_bar = tqdm(labeled_docs, desc="extracting keywords", disable=not verbose)
         for doc, label in p_bar:
-            # if have already extracted the keywords, just use it
-            if doc.keywords is not None:
-                doc_keywords_list.append(doc.keywords[:self.topK])
-                continue
-            else:
-                # if not, extract the keywords from the document
-                doc_str = ";".join([doc.title, doc.author, doc.content])
-                # extract the keywords
-                keywords = jieba.analyse.textrank(doc_str, topK=None, withWeight=True)
-                # record the keywords
-                doc.keywords = keywords
-                doc_keywords_list.append(keywords[:self.topK])
+            # since we have already extracted keywords from documents, we can skip this step.
+            assert doc.keywords is not None
+            doc_keywords_list.append(doc.keywords)
 
         return LabelDataset(doc_keywords_list, labeled_docs.labels)
 
