@@ -1,7 +1,8 @@
 /bda2023_mid_dataset/
 /organized_data/
-
+/pipeline_caches/
 /.idea/
 /.vscode/
 /venv/
 .DS_STORE
+.env

@@ -18,8 +18,8 @@ class DefaultFilterer(IDocsFilterer):
     def filter_documents(self, documents: IDocsDataset, stock: Stock, verbose=True) -> IDocsDataset:
         stock_name = stock.name
         filtered_documents = []
-        documents = tqdm(documents, desc="filtering documents", disable=not verbose)
-        for document in documents:
+        p_bar = tqdm(documents, desc="filtering documents", disable=not verbose)
+        for document in p_bar:
             if stock_name in document.title or stock_name in document.content:
                 filtered_documents.append(document)
 

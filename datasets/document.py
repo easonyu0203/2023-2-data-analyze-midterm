@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import List, Tuple
 
 
 @dataclass
@@ -9,3 +10,4 @@ class Document:
     author: str
     content: str
     post_time: datetime
+    keywords: List[Tuple[str, float]] | None = None
