@@ -1,5 +1,5 @@
 """
-This module contains the problem spec pipeline class. which follow our problem specification.
+This module contains the problem spec preprocess class. which follow our problem specification.
 1. filter documents: remove documents that aren't relevant to the stock we are interested in.
 2. label documents: label documents by the future return percentage of the stock.
 3. extract keywords: extract keywords from documents.
@@ -14,11 +14,11 @@ from dataclasses import dataclass
 from datasets.docs_dataset import IDocsDataset
 from datasets.labeled_docs_dataset import ILabeledDataset
 from datasets.stock_dataset import Stock
-from pipeline.docs_filterer import IDocsFilterer
-from pipeline.docs_labeler import IDocsLabeler
-from pipeline.keyword_extractor import IKeywordExtractor
-from pipeline.labeled_docs_filterer import ILabeledDocsFilterer
-from pipeline.vectorlizer import IVectorlizer
+from preprocess.docs_filterer import IDocsFilterer
+from preprocess.docs_labeler import IDocsLabeler
+from preprocess.keyword_extractor import IKeywordExtractor
+from preprocess.labeled_docs_filterer import ILabeledDocsFilterer
+from preprocess.vectorlizer import IVectorlizer
 
 
 @dataclass
