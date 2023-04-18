@@ -1,13 +1,16 @@
 from datetime import datetime
-from typing import List, Protocol
+from typing import List, Protocol, Union
 
 import pandas as pd
+from pymongo.collection import Collection
+from pymongo.cursor import Cursor
 
 from datasets.document import Document
+from db.connect import connect_db
 
 
 class IDocsDataset(Protocol):
-    """IDocumentsDataset is a protocol that defines the interface of a documents dataset."""
+    """IDocumentsDataset is a protocol that defines the interface of documents dataset."""
 
     def __getitem__(self, index: int) -> Document:
         ...
@@ -19,7 +22,7 @@ class IDocsDataset(Protocol):
         ...
 
     def query_by_time(self, start_time: datetime | str, end_time: datetime | str) -> List[Document]:
-        """return a list of document with the time span"""
+        """return a list of document with the time span (include start_time but exclude end_time)"""
         ...
 
 
@@ -96,6 +99,62 @@ class DocsDataset(IDocsDataset):
     def __repr__(self):
         """return the string representation of the DocumentsDataset size of dataset"""
         return f"DocumentsDataset(size={len(self)})"
+
+
+class DbDocsDataset(IDocsDataset):
+    """access data by mongodb"""
+
+    def __init__(self):
+        self.collection: Collection = connect_db()
+        self.cursor: Cursor = self.collection.find()
+
+    def __getitem__(self, index: int) -> Document:
+        doc = self.collection.find().skip(index).limit(1)[0]
+        return Document(
+            title=doc["title"],
+            author=doc["author"],
+            content=doc["content"],
+            post_time=doc["post_time"],
+            keywords=doc.get("keywords", None),
+        )
+
+    def __len__(self) -> int:
+        return self.collection.count_documents({})
+
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> Document:
+        if not self.cursor.alive:
+            self.cursor = self.collection.find()
+        doc = next(self.cursor)
+        return Document(
+            title=doc["title"],
+            author=doc["author"],
+            content=doc["content"],
+            post_time=doc["post_time"],
+            keywords=doc.get("keywords", None),
+        )
+
+    def query_by_time(
+        self, start_time: Union[datetime, str], end_time: Union[datetime, str]
+    ) -> List[Document]:
+        if isinstance(start_time, str):
+            start_time = datetime.fromisoformat(start_time)
+        if isinstance(end_time, str):
+            end_time = datetime.fromisoformat(end_time)
+
+        docs = self.collection.find({"post_time": {"$gte": start_time, "$lt": end_time}})
+        return [
+            Document(
+                title=doc["title"],
+                author=doc["author"],
+                content=doc["content"],
+                post_time=doc["post_time"],
+                keywords=doc.get("keywords", None),
+            )
+            for doc in docs
+        ]
 
 
 if __name__ == "__main__":
