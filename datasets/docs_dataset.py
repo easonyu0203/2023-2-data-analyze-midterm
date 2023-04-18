@@ -36,6 +36,9 @@ class DocsDataset(IDocsDataset):
         assert (documents_csv_path is not None) or (source_df is not None) or (document_list is not None)
         assert not (documents_csv_path is None and source_df is None and document_list is None)
 
+        # cache dict for documents
+        self.documents_cache = {}
+
         if source_df is not None:
             self.documents_df = source_df
         elif documents_csv_path is not None:
@@ -55,14 +58,26 @@ class DocsDataset(IDocsDataset):
         result_df = self.documents_df.loc[start_time:end_time]
         documents = []
         for _, row in result_df.iterrows():
-            document = Document(title=row['title'], author=row['author'], content=row['content'], post_time=row.name)
-            documents.append(document)
+            # if the document is already in cache, then return the cached document
+            if row.name in self.documents_cache:
+                documents.append(self.documents_cache[row.name])
+                continue
+            else:
+                # if the document is not in cache, then create a new document and add it to cache
+                document = Document(title=row['title'], author=row['author'], content=row['content'],
+                                    post_time=row.name)
+                self.documents_cache[row.name] = document
+                documents.append(document)
         return documents
 
     def __getitem__(self, index) -> Document:
         row = self.documents_df.iloc[index]
 
-        return Document(title=row['title'], author=row['author'], content=row['content'], post_time=row.name)
+        # if the document is not in cache, then create a new document and add it to cache
+        if row.name not in self.documents_cache:
+            self.documents_cache[row.name] = Document(title=row['title'], author=row['author'], content=row['content'],
+                                                      post_time=row.name)
+        return self.documents_cache[row.name]
 
     def __len__(self):
         return len(self.documents_df)
