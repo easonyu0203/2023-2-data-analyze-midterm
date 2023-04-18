@@ -2,7 +2,9 @@
 # notebook we aim to do the following 1. make two Excel files one contain all 上市股票 other contain all 上櫃股票 2. separate
 # each stock to a sheet and order by time 3. rename column to english so will be easy to use in the future
 from typing import Dict
+import dotenv;
 
+dotenv.load_dotenv()
 import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
@@ -13,15 +15,14 @@ folder_name = "organize"
 if folder_name in os.getcwd():
     os.chdir(os.path.abspath(os.pardir))
 
-
 # # Configuration
-DATA_DIR = "./bda2023_mid_dataset"
-STOCKS_DIR = "./organized_data/stocks"
-METADATA_PATH = "./organized_data/stock_metadata.csv"
+DATA_DIR = os.getenv("RAW_DATA_DIR")  # "./bda2023_mid_dataset"
+STOCKS_DIR = Path(os.getenv("ORGANIZED_DATASET_DIR"), "stocks")  # "./organized_data/stocks"
+METADATA_PATH = Path(os.getenv("ORGANIZED_DATASET_DIR"), "stock_meta.csv")  # "./organized_data/stock_metadata.csv"
 RAW_DATASET_NAME = 'stock_data_2019-2023.xlsx'
-ORGANIZED_DATASET_DIR = './organized_data/stocks'
 RENAMED_COLUMNS = [
-    'name', 'date', 'open', 'high', 'low', 'close', 'volume(k)', 'turnover(k)', 'transaction', 'outstanding(k)', 'pe', 'pb'
+    'name', 'date', 'open', 'high', 'low', 'close', 'volume(k)', 'turnover(k)', 'transaction', 'outstanding(k)', 'pe',
+    'pb'
 ]
 raw_stocks_path = Path(DATA_DIR, RAW_DATASET_NAME)
 
@@ -38,7 +39,8 @@ def get_raw_stocks_dfs() -> Dict[str, pd.DataFrame]:
     sheet_names = excel_file.sheet_names
 
     # Load all sheets
-    dfs = {sheet_name: excel_file.parse(sheet_name, na_values=['-']) for sheet_name in sheet_names if sheet_name != '摘要'}
+    dfs = {sheet_name: excel_file.parse(sheet_name, na_values=['-']) for sheet_name in sheet_names if
+           sheet_name != '摘要'}
     return dfs
 
 
@@ -99,12 +101,11 @@ stock_metadata_df = pd.DataFrame(stock_metadata).T
 for stock_id, df in stock_dfs.items():
     stock_dfs[stock_id] = stock_dfs[stock_id].drop(columns=['name'])
 
-
 # Save metadata and stock dfs csv files
 # save to csv
 os.makedirs(STOCKS_DIR, exist_ok=True)
 for stock_id, df in tqdm(stock_dfs.items()):
-    csv_file_path = Path(ORGANIZED_DATASET_DIR, f"{stock_id}.csv")
+    csv_file_path = Path(STOCKS_DIR, f"{stock_id}.csv")
     stock_metadata_df.loc[stock_id, 'history_path'] = str(csv_file_path.absolute())
     df.to_csv(csv_file_path, index=False)
 metadata_csv_path = Path(METADATA_PATH)
