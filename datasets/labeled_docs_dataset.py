@@ -12,6 +12,9 @@ class ILabeledDataset(Protocol):
     features: list[Any]
     labels: list[float]
 
+    def __init__(self, features: List[Any], labels: List[float]):
+        ...
+
     def __getitem__(self, index: int) -> Tuple[Any, float]:
         ...
 

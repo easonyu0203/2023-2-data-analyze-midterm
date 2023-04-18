@@ -24,3 +24,5 @@ class DefaultFilterer(IDocsFilterer):
                 filtered_documents.append(document)
 
         return DocsDataset(document_list=filtered_documents)
+
+
