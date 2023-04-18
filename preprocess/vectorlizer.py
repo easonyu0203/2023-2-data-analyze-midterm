@@ -8,6 +8,9 @@ from datasets.labeled_docs_dataset import ILabeledDataset, LabelDataset
 class IVectorlizer(Protocol):
     """IVectorlizer convert keywords to vector"""
 
+    def transform(self, keywords: List[Tuple[str, float]]) -> List[float]:
+        ...
+
     def convert(self, labeled_docs_keywords: ILabeledDataset, verbose=True) -> ILabeledDataset:
         ...
 
@@ -20,6 +23,11 @@ class TFIDFVectorlizer(IVectorlizer):
 
     def __init__(self):
         self.vectorizer = TfidfVectorizer()
+
+    def transform(self, keywords: List[Tuple[str, float]]) -> List[float]:
+        # convert keywords to string with weights by joining them with space
+        doc = " ".join([' '.join([k] * int(w * 100)) for k, w in keywords])
+        return self.vectorizer.transform([doc]).toarray()[0]
 
     def convert(self, labeled_docs_keywords: ILabeledDataset, verbose=True) -> ILabeledDataset:
         """

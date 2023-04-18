@@ -1,6 +1,7 @@
 import pickle
 import time
 
+import pymongo
 from tqdm import tqdm
 
 from db._generate_keywords_worker import generate_keywords
@@ -27,9 +28,8 @@ def store_generated_keywords(verbose=True, num_workers=4, batch_size=10000):
     collection = connect_db()
 
     if verbose: print("loading documents from database...")
-    update_operations = []
+    total_count = collection.count_documents({'keywords': []})
     docs_to_process = collection.find({'keywords': []})
-    total_count = docs_to_process.count()
     if verbose: print(f"found {total_count} documents to process, start processing...")
     pbar = tqdm(docs_to_process, total=total_count, desc="generating keywords", disable=not verbose)
 
@@ -54,4 +54,4 @@ def store_generated_keywords(verbose=True, num_workers=4, batch_size=10000):
 
 if __name__ == '__main__':
     # store_generated_keywords_single_process(verbose=True)
-    store_generated_keywords(verbose=True, num_workers=10, batch_size=10000)
+    store_generated_keywords(verbose=True, num_workers=14, batch_size=10000)

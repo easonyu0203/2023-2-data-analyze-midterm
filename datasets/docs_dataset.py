@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import List, Protocol, Union
+from datetime import datetime, timedelta
+from typing import List, Protocol, Union, Any
 
 import pandas as pd
 from pymongo.collection import Collection
@@ -21,7 +21,7 @@ class IDocsDataset(Protocol):
     def __next__(self) -> Document:
         ...
 
-    def query_by_time(self, start_time: datetime | str, end_time: datetime | str) -> List[Document]:
+    def query_by_time(self, start_time: datetime | str, end_time: datetime | str) -> Any:
         """return a list of document with the time span (include start_time but exclude end_time)"""
         ...
 
@@ -57,8 +57,8 @@ class DocsDataset(IDocsDataset):
             self.documents_df.set_index('post_time', inplace=True)
 
     def query_by_time(self, start_time: datetime | pd.Timestamp | str, end_time: datetime | pd.Timestamp | str) \
-            -> List[Document]:
-        result_df = self.documents_df.loc[start_time:end_time]
+            -> IDocsDataset:
+        result_df = self.documents_df.loc[start_time:end_time - timedelta(seconds=1)]
         documents = []
         for _, row in result_df.iterrows():
             # if the document is already in cache, then return the cached document
@@ -71,7 +71,7 @@ class DocsDataset(IDocsDataset):
                                     post_time=row.name)
                 self.documents_cache[row.name] = document
                 documents.append(document)
-        return documents
+        return DocsDataset(document_list=documents)
 
     def __getitem__(self, index) -> Document:
         row = self.documents_df.iloc[index]
@@ -138,23 +138,24 @@ class DbDocsDataset(IDocsDataset):
 
     def query_by_time(
         self, start_time: Union[datetime, str], end_time: Union[datetime, str]
-    ) -> List[Document]:
+    ) -> IDocsDataset:
         if isinstance(start_time, str):
             start_time = datetime.fromisoformat(start_time)
         if isinstance(end_time, str):
             end_time = datetime.fromisoformat(end_time)
 
         docs = self.collection.find({"post_time": {"$gte": start_time, "$lt": end_time}})
-        return [
-            Document(
-                title=doc["title"],
-                author=doc["author"],
-                content=doc["content"],
-                post_time=doc["post_time"],
-                keywords=doc.get("keywords", None),
-            )
-            for doc in docs
-        ]
+        docs = [
+                Document(
+                    title=doc["title"],
+                    author=doc["author"],
+                    content=doc["content"],
+                    post_time=doc["post_time"],
+                    keywords=doc.get("keywords", None),
+                )
+                for doc in docs
+            ]
+        return DocsDataset(document_list=docs)
 
 
 if __name__ == "__main__":

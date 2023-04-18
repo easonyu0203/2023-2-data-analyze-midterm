@@ -3,6 +3,8 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay
 
+from datasets.labeled_docs_dataset import ILabeledDataset
+
 
 @dataclass
 class EvaluationResult:
@@ -18,7 +20,7 @@ class EvaluationResult:
     val_conf_matrix: str
 
 
-def train_val_model(model, train_dataset, val_dataset) -> EvaluationResult:
+def train_val_model(model, train_dataset: ILabeledDataset, val_dataset: ILabeledDataset) -> EvaluationResult:
     """
     Train and evaluate a model on the training and validation datasets
     currently, we assume model is regression model and label is continuous

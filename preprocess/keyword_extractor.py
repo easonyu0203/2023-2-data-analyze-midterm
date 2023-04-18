@@ -14,6 +14,10 @@ class IKeywordExtractor(Protocol):
         """extract keywords from documents."""
         ...
 
+    def transform(self, doc: Document) -> List[Tuple[str, float]]:
+        """transform a document to a list of keywords and their weights"""
+        ...
+
 
 class DefaultKeywordExtractor(IKeywordExtractor):
     """
@@ -33,8 +37,8 @@ class DefaultKeywordExtractor(IKeywordExtractor):
         p_bar = tqdm(labeled_docs, desc="extracting keywords", disable=not verbose)
         for doc, label in p_bar:
             # since we have already extracted keywords from documents, we can skip this step.
-            assert doc.keywords is not None
-            doc_keywords_list.append(doc.keywords)
+            keywords = self.transform(doc)
+            doc_keywords_list.append(keywords)
 
         # remove doc if keywords == []
         doc_keywords_list = [doc_keywords for doc_keywords in doc_keywords_list if doc_keywords != []]
@@ -43,6 +47,11 @@ class DefaultKeywordExtractor(IKeywordExtractor):
             print("left with {} docs".format(len(doc_keywords_list)))
 
         return LabelDataset(doc_keywords_list, labeled_docs.labels)
+
+    def transform(self, doc: Document) -> List[Tuple[str, float]]:
+        """transform a document to a list of keywords and their weights"""
+        assert doc.keywords is not None
+        return doc.keywords
 
 
 if __name__ == "__main__":
