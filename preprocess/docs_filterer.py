@@ -16,12 +16,16 @@ class DefaultFilterer(IDocsFilterer):
     """use whether doc title or content contains the stock name to filter documents"""
 
     def filter_documents(self, documents: IDocsDataset, stock: Stock, verbose=True) -> IDocsDataset:
+        if verbose:
+            print("[DefaultFilterer] filtering documents by whether doc title or content contains the stock name")
         stock_name = stock.name
         filtered_documents = []
         p_bar = tqdm(documents, desc="filtering documents", disable=not verbose)
         for document in p_bar:
+            filtered_documents.append(document)
             if stock_name in document.title or stock_name in document.content:
                 filtered_documents.append(document)
+
 
         if verbose:
             # print remaining count

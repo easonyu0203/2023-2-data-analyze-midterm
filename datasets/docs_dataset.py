@@ -51,9 +51,11 @@ class DocsDataset(IDocsDataset):
 
         elif document_list is not None:
             self.documents_df = pd.DataFrame(
-                data=[(document.title, document.author, document.content, document.post_time) for document in
+                data=[(document.title, document.author, document.content, document.post_time, document.keywords) for document in
                       document_list],
-                columns=['title', 'author', 'content', 'post_time'])
+                columns=['title', 'author', 'content', 'post_time',
+                         'keywords'])
+            self.documents_df['post_time'] = pd.to_datetime(self.documents_df['post_time'])
             self.documents_df.set_index('post_time', inplace=True)
 
     def query_by_time(self, start_time: datetime | pd.Timestamp | str, end_time: datetime | pd.Timestamp | str) \
@@ -68,7 +70,7 @@ class DocsDataset(IDocsDataset):
             else:
                 # if the document is not in cache, then create a new document and add it to cache
                 document = Document(title=row['title'], author=row['author'], content=row['content'],
-                                    post_time=row.name)
+                                    post_time=row.name, keywords=row['keywords'])
                 self.documents_cache[row.name] = document
                 documents.append(document)
         return DocsDataset(document_list=documents)
@@ -79,7 +81,7 @@ class DocsDataset(IDocsDataset):
         # if the document is not in cache, then create a new document and add it to cache
         if row.name not in self.documents_cache:
             self.documents_cache[row.name] = Document(title=row['title'], author=row['author'], content=row['content'],
-                                                      post_time=row.name)
+                                                      post_time=row.name, keywords=row['keywords'])
         return self.documents_cache[row.name]
 
     def __len__(self):

@@ -34,6 +34,8 @@ class TFIDFVectorlizer(IVectorlizer):
         TFIDFVectorlizer convert keywords to vector
         we use keyword as the token and weight as the weight of the token to generate the vector.
         """
+        if verbose:
+            print(f"[TFIDFVectorlizer] converting {len(labeled_docs_keywords)} docs to vectors using tf-idf")
         # Convert the input list of keywords with weights into a list of strings
         docs = []
         for keywords, label in labeled_docs_keywords:

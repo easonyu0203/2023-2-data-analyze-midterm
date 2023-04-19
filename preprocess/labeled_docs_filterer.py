@@ -21,11 +21,13 @@ class Near0returnFilterer(ILabeledDocsFilterer):
 
     def filter_documents(self, labeled_documents: ILabeledDataset, verbose=True) -> ILabeledDataset:
         """filter out y (future return %) is close to 0"""
+        if verbose:
+            print(f"[Near 0 return filterer] filtering out documents with return close to 0 within {self.threshold}")
         filtered_documents = []
         labels = []
         pbar = tqdm(labeled_documents, desc="filtering documents", disable=not verbose)
         for (document, label) in pbar:
-            if abs(document.label) > self.threshold:
+            if abs(label) > self.threshold:
                 filtered_documents.append(document)
                 labels.append(label)
 

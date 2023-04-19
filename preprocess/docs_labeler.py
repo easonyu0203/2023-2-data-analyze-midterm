@@ -23,6 +23,9 @@ class DefaultDocsLabeler(IDocsLabeler):
 
     def label_documents(self, documents: IDocsDataset, stock: Stock, verbose=True) -> ILabeledDataset:
         """simply label document by the s day future return percentage of the stock."""
+        if verbose:
+            print("[DefaultDocsLabeler] labeling documents by the s day future return percentage of the stock...")
+
         # we don't want to alter original stock data
         stock_history = stock.history_df.copy()
         stock_history['future_return%'] = stock_history['close'].pct_change(self.s).shift(-self.s) * 100
@@ -34,7 +37,7 @@ class DefaultDocsLabeler(IDocsLabeler):
         p_bar = tqdm(stock_history.iterrows(), desc="labeling documents", disable=not verbose)
         for date, stock_row in p_bar:
             # query documents that are posted within the same day as the stock
-            queried_docs = documents.query_by_time(date, date + timedelta(days=1, seconds=-1))
+            queried_docs = documents.query_by_time(date, date + timedelta(days=1))
             future_return = stock_row['future_return%']
             # label documents by the future return percentage of the stock
             for document in queried_docs:

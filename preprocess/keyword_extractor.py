@@ -31,6 +31,9 @@ class DefaultKeywordExtractor(IKeywordExtractor):
         self.topK = topK
 
     def extract_keywords(self, labeled_docs: ILabeledDataset, verbose=True) -> ILabeledDataset:
+        if verbose:
+            print("[DefaultKeywordExtractor] extract keywords from documents using jieba")
+
         doc: Document
         doc_keywords_list: List[List[Tuple[str, float]]] = []
 
@@ -41,12 +44,13 @@ class DefaultKeywordExtractor(IKeywordExtractor):
             doc_keywords_list.append(keywords)
 
         # remove doc if keywords == []
-        doc_keywords_list = [doc_keywords for doc_keywords in doc_keywords_list if doc_keywords != []]
+        doc_keywords_list, labels = zip(*[(kws, label) for kws, label in zip(doc_keywords_list, labeled_docs.labels) if kws])
+
         if verbose:
             print(f"remove {len(labeled_docs) - len(doc_keywords_list)} docs because of empty keywords")
             print("left with {} docs".format(len(doc_keywords_list)))
 
-        return LabelDataset(doc_keywords_list, labeled_docs.labels)
+        return LabelDataset(doc_keywords_list, labels)
 
     def transform(self, doc: Document) -> List[Tuple[str, float]]:
         """transform a document to a list of keywords and their weights"""
