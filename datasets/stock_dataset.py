@@ -26,6 +26,12 @@ class StockMeta:
         stock_history_path = stock_row['history_path'].values[0]
         return Stock(stock_name, stock_id, stock_history_path)
 
+    def __str__(self):
+        return f"StockMeta(stock_count={len(self.stock_names)})"
+
+    def __repr__(self):
+        return f"StockMeta(stock_count={len(self.stock_names)})"
+
 
 class Stock:
     """Stock is a class that contains a stock's name, id, and history."""
