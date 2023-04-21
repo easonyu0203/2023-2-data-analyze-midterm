@@ -20,7 +20,7 @@ class EvaluationResult:
     val_conf_matrix: str
 
 
-def train_val_model(model, train_dataset: ILabeledDataset, val_dataset: ILabeledDataset, verbose=True) -> EvaluationResult:
+def train_eval_model(model, train_dataset: ILabeledDataset, val_dataset: ILabeledDataset, verbose=True) -> EvaluationResult:
     """
     Train and evaluate a model on the training and validation datasets
     currently, we assume model is regression model and label is continuous

@@ -19,7 +19,7 @@ class IDocsFilterer(Protocol):
         ...
 
 
-class DefaultFilterer(IDocsFilterer):
+class StockNameFilterer(IDocsFilterer):
     """use whether doc title or content contains the stock name to filter documents"""
 
     def __init__(self, max_docs: int = None):
