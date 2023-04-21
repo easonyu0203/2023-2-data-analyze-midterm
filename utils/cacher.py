@@ -36,3 +36,14 @@ class Cacher:
                 return pickle.load(f)
         except FileNotFoundError:
             return None
+
+    @staticmethod
+    def exits(cache_name) -> bool:
+        """
+        check if the cache exists
+        :param cache_name: the name of the cache
+        :return: whether the cache exists
+        """
+        cache_dir = os.getenv('CACHE_DIR')
+        cache_path = os.path.join(cache_dir, cache_name)
+        return os.path.exists(cache_path)

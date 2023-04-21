@@ -1,15 +1,8 @@
-import os
-import pickle
-from pathlib import Path
 from typing import Protocol
 from datasets.docs_dataset import IDocsDataset, DocsDataset
 from datasets.stock_dataset import Stock
 from tqdm import tqdm
-from dotenv import load_dotenv
-
-load_dotenv()
-
-default_filt_cache_dir = Path(os.getenv("CACHE_DIR")) / "default_filterer"
+from utils.cacher import Cacher
 
 class IDocsFilterer(Protocol):
     """Filter documents that aren't relevant to the stock we are interested in."""
@@ -34,9 +27,10 @@ class StockNameFilterer(IDocsFilterer):
             print("[StockNameFilterer] filtering documents by whether doc title or content contains the stock name")
 
         # load from cache if exists
-        if self.max_docs is None and (default_filt_cache_dir /f'{stock.name}.pkl').exists():
-            if verbose: print(f"load from cache: {default_filt_cache_dir / f'{stock.name}.pkl'}")
-            filtered_documents = pickle.load(open(default_filt_cache_dir / f"{stock.name}.pkl", "rb"))
+        cache_name = f'stock_name_filterer__{stock.name}.pkl'
+        if self.max_docs is None and Cacher.exits(cache_name):
+            if verbose: print(f"load from cache: {cache_name}")
+            filtered_documents = Cacher.load(cache_name)
             return DocsDataset(document_list=filtered_documents)
 
         # perform filtering
@@ -51,9 +45,9 @@ class StockNameFilterer(IDocsFilterer):
 
         # save to cache using pickle
         if self.max_docs is None:
-            if verbose: print(f"save to cache: {default_filt_cache_dir / f'{stock.name}.pkl'}")
-            default_filt_cache_dir.mkdir(parents=True, exist_ok=True)
-            pickle.dump(filtered_documents, open(default_filt_cache_dir / f"{stock.name}.pkl", "wb"))
+            cache_name = f'stock_name_filterer__{stock.name}.pkl'
+            if verbose: print(f"save to cache: {cache_name}")
+            Cacher.cache(cache_name, filtered_documents)
 
         if verbose:
             # print remaining count
