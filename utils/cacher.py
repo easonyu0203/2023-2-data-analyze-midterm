@@ -1,5 +1,5 @@
 import os
-
+import pickle
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,7 +20,7 @@ class Cacher:
         cache_dir = os.getenv('CACHE_DIR')
         cache_path = os.path.join(cache_dir, cache_name)
         with open(cache_path, 'wb') as f:
-            f.write(data)
+            pickle.dump(data, f)
 
     @staticmethod
     def load(cache_name):
@@ -33,6 +33,6 @@ class Cacher:
         cache_path = os.path.join(cache_dir, cache_name)
         try:
             with open(cache_path, 'rb') as f:
-                return f.read()
+                return pickle.load(f)
         except FileNotFoundError:
             return None

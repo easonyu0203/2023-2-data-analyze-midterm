@@ -119,7 +119,7 @@ class DbDocsDataset(IDocsDataset):
             title=doc["title"],
             author=doc["author"],
             content=doc["content"],
-            post_time=doc["post_time"],
+            post_time=pd.to_datetime(doc["post_time"]),
             keywords=doc.get("keywords", None),
         )
 
@@ -145,7 +145,7 @@ class DbDocsDataset(IDocsDataset):
             title=doc["title"],
             author=doc["author"],
             content=doc["content"],
-            post_time=doc["post_time"],
+            post_time=pd.to_datetime(doc["post_time"]),
             keywords=doc.get("keywords", None),
         )
 
@@ -163,7 +163,7 @@ class DbDocsDataset(IDocsDataset):
                 title=doc["title"],
                 author=doc["author"],
                 content=doc["content"],
-                post_time=doc["post_time"],
+                post_time=pd.to_datetime(doc["post_time"]),
                 keywords=doc.get("keywords", None),
             )
             for doc in docs
