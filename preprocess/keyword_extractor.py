@@ -19,9 +19,9 @@ class IKeywordExtractor(Protocol):
         ...
 
 
-class DefaultKeywordExtractor(IKeywordExtractor):
+class JiebaKeywordExtractor(IKeywordExtractor):
     """
-    by default, we use jieba to extract keywords from documents.
+    we use jieba to extract keywords from documents.
     you can set the max number of keywords to extract by setting the topK parameter.
     this return a labeled dataset contain (x, y) where x is a list of pair(keyword, weight) and y is a float value.
     set topK to None to extract all keywords.
@@ -32,7 +32,7 @@ class DefaultKeywordExtractor(IKeywordExtractor):
 
     def extract_keywords(self, labeled_docs: ILabeledDataset, verbose=True) -> ILabeledDataset:
         if verbose:
-            print("[DefaultKeywordExtractor] extract keywords from documents using jieba")
+            print("[JiebaKeywordExtractor] extract keywords from documents using jieba")
 
         doc: Document
         doc_keywords_list: List[List[Tuple[str, float]]] = []
@@ -59,4 +59,4 @@ class DefaultKeywordExtractor(IKeywordExtractor):
 
 
 if __name__ == "__main__":
-    DefaultKeywordExtractor(topK=10)
+    JiebaKeywordExtractor(topK=10)

@@ -4,6 +4,7 @@ from datasets.stock_dataset import Stock
 from tqdm import tqdm
 from utils.cacher import Cacher
 
+
 class IDocsFilterer(Protocol):
     """Filter documents that aren't relevant to the stock we are interested in."""
 
@@ -13,11 +14,11 @@ class IDocsFilterer(Protocol):
 
 
 class StockNameFilterer(IDocsFilterer):
-    """use whether doc title or content contains the stock name to filter documents"""
+    """Use whether doc title or content contains the stock name to filter documents"""
 
     def __init__(self, max_docs: int = None):
         """
-        filter documents by whether doc title or content contains the stock name
+        Filter documents by whether doc title or content contains the stock name
         :param max_docs: maximum number of documents to keep after filtering
         """
         self.max_docs = max_docs
@@ -40,7 +41,11 @@ class StockNameFilterer(IDocsFilterer):
         for document in p_bar:
             if self.max_docs is not None and len(filtered_documents) >= self.max_docs:
                 break
-            if stock_name in document.title or stock_name in document.content:
+
+            title_words = set(document.title.split())
+            content_words = set(document.content.split())
+
+            if stock_name in title_words or stock_name in content_words:
                 filtered_documents.append(document)
 
         # save to cache using pickle
