@@ -29,12 +29,12 @@ class StockNameFilterer(IDocsFilterer):
         """
         self.max_docs = max_docs
 
-    def filter_documents(self, documents: IDocsDataset, stock: Stock, max_docs=None, verbose=True) -> IDocsDataset:
+    def filter_documents(self, documents: IDocsDataset, stock: Stock, verbose=True) -> IDocsDataset:
         if verbose:
-            print("[DefaultFilterer] filtering documents by whether doc title or content contains the stock name")
+            print("[StockNameFilterer] filtering documents by whether doc title or content contains the stock name")
 
         # load from cache if exists
-        if self.max_docs is None and default_filt_cache_dir.exists():
+        if self.max_docs is None and (default_filt_cache_dir /f'{stock.name}.pkl').exists():
             if verbose: print(f"load from cache: {default_filt_cache_dir / f'{stock.name}.pkl'}")
             filtered_documents = pickle.load(open(default_filt_cache_dir / f"{stock.name}.pkl", "rb"))
             return DocsDataset(document_list=filtered_documents)
