@@ -34,7 +34,7 @@ class DefaultDocsLabeler(IDocsLabeler):
         labels = []
         documents_list = []
         date: pd.Timestamp
-        p_bar = tqdm(stock_history.iterrows(), desc="labeling documents", disable=not verbose)
+        p_bar = tqdm(stock_history.iterrows(), total=len(stock_history), desc="labeling documents", disable=not verbose)
         for date, stock_row in p_bar:
             # query documents that are posted within the same day as the stock
             queried_docs = documents.query_by_time(date, date + timedelta(days=1))

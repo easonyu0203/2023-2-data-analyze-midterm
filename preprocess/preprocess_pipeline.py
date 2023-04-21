@@ -10,6 +10,7 @@ This module contains the problem spec preprocess class. which follow our problem
 8. backtest: backtest the model's performance.
 """
 from dataclasses import dataclass
+from typing import List
 
 from datasets.docs_dataset import IDocsDataset
 from datasets.document import Document
@@ -36,37 +37,39 @@ class PreprocessPipeline:
     def __init__(self, config: PreprocessPipeLineConfig):
         self.config = config
 
+    def print_line(self, verbose=True):
+        if verbose:
+            print()
+            print("=" * 30)
+
     def preprocess(self, docs_dataset: IDocsDataset, stock: Stock, verbose=True) -> ILabeledDataset:
         """main preprocess pipe line function"""
-        # filter & labeled documents
-        filtered_labeled_docs = self.filter_and_label(docs_dataset, stock, verbose=verbose)
 
-        # transform documents
-        labeled_docs_vectors = self.transform(filtered_labeled_docs, verbose=verbose)
-
-        return labeled_docs_vectors
-
-    def filter_and_label(self, docs_dataset: IDocsDataset, stock: Stock, verbose=True) -> ILabeledDataset:
-        """filter and label whole dataset"""
+        self.print_line(verbose=verbose)
         # filter documents
         filtered_docs = self.config.docs_filterer.filter_documents(docs_dataset, stock,
                                                                    verbose=verbose)
 
+        self.print_line(verbose=verbose)
         # label documents
         labeled_docs = self.config.docs_labeler.label_documents(filtered_docs, stock, verbose=verbose)
 
+        self.print_line(verbose=verbose)
         # filter labeled documents
         filtered_labeled_docs = self.config.labeled_docs_filterer.filter_documents(labeled_docs, verbose=verbose)
-        return filtered_labeled_docs
 
-    def transform(self, labeledDocsDataset: ILabeledDataset, verbose=True) -> ILabeledDataset:
-        """transform whole dataset"""
+        self.print_line(verbose=verbose)
         # extract keywords
-        labeled_docs_keywords = self.config.keywords_extractor.extract_keywords(labeledDocsDataset, verbose=verbose)
+        labeled_docs_keywords = self.config.keywords_extractor.extract_keywords(filtered_labeled_docs, verbose=verbose)
 
+        self.print_line(verbose=verbose)
         # convert keywords to vectors
         labeled_docs_vectors = self.config.vectorizer.convert(labeled_docs_keywords, verbose=verbose)
+
         return labeled_docs_vectors
+
+    def transform(self, doc: Document) -> List[float]:
+        keywords, label = self.config.keywords_extractor.extract_keywords()
 
     def single_doc_transform(self, doc: Document):
         """transform single document, this is useful when want to do inference, we want to have some transform when

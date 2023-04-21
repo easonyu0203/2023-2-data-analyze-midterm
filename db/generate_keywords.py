@@ -5,7 +5,7 @@ import pymongo
 from tqdm import tqdm
 
 from db._generate_keywords_worker import generate_keywords
-from db.connect import connect_db
+from db.connect import get_docs_collection
 import concurrent.futures
 
 import concurrent.futures
@@ -25,7 +25,7 @@ def batch(iterable, size):
 
 def store_generated_keywords(verbose=True, num_workers=4, batch_size=10000):
     """Using jieba to generate keywords for each document and store them in the database."""
-    collection = connect_db()
+    collection = get_docs_collection()
 
     if verbose: print("loading documents from database...")
     total_count = collection.count_documents({'keywords': []})

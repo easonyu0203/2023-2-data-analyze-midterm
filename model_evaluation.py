@@ -20,7 +20,7 @@ class EvaluationResult:
     val_conf_matrix: str
 
 
-def train_val_model(model, train_dataset: ILabeledDataset, val_dataset: ILabeledDataset) -> EvaluationResult:
+def train_val_model(model, train_dataset: ILabeledDataset, val_dataset: ILabeledDataset, verbose=True) -> EvaluationResult:
     """
     Train and evaluate a model on the training and validation datasets
     currently, we assume model is regression model and label is continuous
@@ -30,8 +30,10 @@ def train_val_model(model, train_dataset: ILabeledDataset, val_dataset: ILabeled
     X_val, y_val = zip(*val_dataset)
 
     # Train
+    if verbose: print("fitting model...")
     model.fit(X_train, y_train)
 
+    if verbose: print("model prediction...")
     # Make predictions on the training and validation datasets
     y_train_pred = model.predict(X_train)
     y_val_pred = model.predict(X_val)
@@ -44,11 +46,12 @@ def train_val_model(model, train_dataset: ILabeledDataset, val_dataset: ILabeled
 
     # Evaluate the model on the training and validation datasets
     # Calculate performance metrics
+    if verbose: print("calculating performance metrics...")
     train_acc = accuracy_score(y_train_binary, y_train_pred_binary)
     val_acc = accuracy_score(y_val_binary, y_val_pred_binary)
 
-    train_report = classification_report(y_train_binary, y_train_pred_binary, target_names=['fall', 'rise'])
-    val_report = classification_report(y_val_binary, y_val_pred_binary, target_names=['fall', 'rise'])
+    train_report = classification_report(y_train_binary, y_train_pred_binary, target_names=['fallen', 'risen'])
+    val_report = classification_report(y_val_binary, y_val_pred_binary, target_names=['fallen', 'risen'])
 
     train_conf_matrix = confusion_matrix(y_train_binary, y_train_pred_binary)
     val_conf_matrix = confusion_matrix(y_val_binary, y_val_pred_binary)

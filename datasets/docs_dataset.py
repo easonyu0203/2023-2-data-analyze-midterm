@@ -6,7 +6,7 @@ from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 
 from datasets.document import Document
-from db.connect import connect_db
+from db.connect import get_docs_collection
 
 
 class IDocsDataset(Protocol):
@@ -51,12 +51,15 @@ class DocsDataset(IDocsDataset):
 
         elif document_list is not None:
             self.documents_df = pd.DataFrame(
-                data=[(document.title, document.author, document.content, document.post_time, document.keywords) for document in
+                data=[(document.title, document.author, document.content, document.post_time, document.keywords) for
+                      document in
                       document_list],
                 columns=['title', 'author', 'content', 'post_time',
                          'keywords'])
             self.documents_df['post_time'] = pd.to_datetime(self.documents_df['post_time'])
             self.documents_df.set_index('post_time', inplace=True)
+
+        self.documents_df.sort_index(inplace=True)
 
     def query_by_time(self, start_time: datetime | pd.Timestamp | str, end_time: datetime | pd.Timestamp | str) \
             -> IDocsDataset:
@@ -107,7 +110,7 @@ class DbDocsDataset(IDocsDataset):
     """access data by mongodb"""
 
     def __init__(self):
-        self.collection: Collection = connect_db()
+        self.collection: Collection = get_docs_collection()
         self.cursor: Cursor = self.collection.find()
 
     def __getitem__(self, index: int) -> Document:
@@ -121,12 +124,20 @@ class DbDocsDataset(IDocsDataset):
         )
 
     def __len__(self) -> int:
-        return self.collection.count_documents({})
+        if not hasattr(self, "max_cnt"):
+            self.max_cnt = self.collection.count_documents({})
+        return self.max_cnt
 
     def __iter__(self):
+        self.max_cnt = self.collection.count_documents({})
+        self.current_cnt = 0
         return self
 
     def __next__(self) -> Document:
+        self.current_cnt += 1
+        if self.current_cnt >= self.max_cnt:
+            raise StopIteration
+
         if not self.cursor.alive:
             self.cursor = self.collection.find()
         doc = next(self.cursor)
@@ -139,7 +150,7 @@ class DbDocsDataset(IDocsDataset):
         )
 
     def query_by_time(
-        self, start_time: Union[datetime, str], end_time: Union[datetime, str]
+            self, start_time: Union[datetime, str], end_time: Union[datetime, str]
     ) -> IDocsDataset:
         if isinstance(start_time, str):
             start_time = datetime.fromisoformat(start_time)
@@ -148,16 +159,20 @@ class DbDocsDataset(IDocsDataset):
 
         docs = self.collection.find({"post_time": {"$gte": start_time, "$lt": end_time}})
         docs = [
-                Document(
-                    title=doc["title"],
-                    author=doc["author"],
-                    content=doc["content"],
-                    post_time=doc["post_time"],
-                    keywords=doc.get("keywords", None),
-                )
-                for doc in docs
-            ]
+            Document(
+                title=doc["title"],
+                author=doc["author"],
+                content=doc["content"],
+                post_time=doc["post_time"],
+                keywords=doc.get("keywords", None),
+            )
+            for doc in docs
+        ]
         return DocsDataset(document_list=docs)
+
+    def __repr__(self):
+        """return the string representation of the DocumentsDataset size of dataset"""
+        return f"DocumentsDataset(size={len(self)})"
 
 
 if __name__ == "__main__":

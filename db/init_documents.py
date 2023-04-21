@@ -4,7 +4,7 @@ from pathlib import Path
 import dotenv
 import pandas as pd
 
-from db.connect import connect_db
+from db.connect import get_docs_collection
 
 # env
 dotenv.load_dotenv()
@@ -26,5 +26,5 @@ def init_db(collection):
 
 
 if __name__ == '__main__':
-    connection = connect_db()
+    connection = get_docs_collection()
     init_db(connection)
