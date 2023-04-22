@@ -7,10 +7,13 @@ from pymongo.cursor import Cursor
 
 from datasets.document import Document
 from db.connect import get_docs_collection
+from utils.cacher import Cacher
 
 
 class IDocsDataset(Protocol):
     """IDocumentsDataset is a protocol that defines the interface of documents dataset."""
+    
+    documents_df: pd.DataFrame
 
     def __getitem__(self, index: int) -> Document:
         ...
@@ -35,31 +38,46 @@ class DocsDataset(IDocsDataset):
     def __init__(self, documents_csv_path: str | None = None, source_df: pd.DataFrame | None = None,
                  document_list: List[Document] | None = None):
         """supply data source by csv file or DataFrame or document list"""
-        # assert only one of the two arguments is not None and both can't be None
-        assert (documents_csv_path is not None) or (source_df is not None) or (document_list is not None)
-        assert not (documents_csv_path is None and source_df is None and document_list is None)
 
-        # cache dict for documents
-        self.documents_cache = {}
+        # load cached documents_df if exits
+        if document_list is None and source_df is None and documents_csv_path is None and\
+                Cacher.exits('DocsDataset__documents_df'):
+            print("DocsDataset: load cached documents_df")
+            self.documents_df = Cacher.load('DocsDataset__documents_df')
+            # cache dict for documents
+            self.documents_cache = {}
+        else:
 
-        if source_df is not None:
-            self.documents_df = source_df
-        elif documents_csv_path is not None:
-            self.documents_df = pd.read_csv(documents_csv_path)
-            self.documents_df['post_time'] = pd.to_datetime(self.documents_df['post_time'])
-            self.documents_df.set_index('post_time', inplace=True)
+            # assert only one of the two arguments is not None and both can't be None
+            assert (documents_csv_path is not None) or (source_df is not None) or (document_list is not None)
+            assert not (documents_csv_path is None and source_df is None and document_list is None)
 
-        elif document_list is not None:
-            self.documents_df = pd.DataFrame(
-                data=[(document.title, document.author, document.content, document.post_time, document.keywords) for
-                      document in
-                      document_list],
-                columns=['title', 'author', 'content', 'post_time',
-                         'keywords'])
-            self.documents_df['post_time'] = pd.to_datetime(self.documents_df['post_time'])
-            self.documents_df.set_index('post_time', inplace=True)
+            # cache dict for documents
+            self.documents_cache = {}
 
-        self.documents_df.sort_index(inplace=True)
+            if source_df is not None:
+                self.documents_df = source_df
+            elif documents_csv_path is not None:
+                self.documents_df = pd.read_csv(documents_csv_path)
+                self.documents_df['post_time'] = pd.to_datetime(self.documents_df['post_time'])
+                self.documents_df.set_index('post_time', inplace=True)
+
+            elif document_list is not None:
+                self.documents_df = pd.DataFrame(
+                    data=[(document.title, document.author, document.content, document.post_time, document.keywords) for
+                          document in
+                          document_list],
+                    columns=['title', 'author', 'content', 'post_time',
+                             'keywords'])
+                self.documents_df['post_time'] = pd.to_datetime(self.documents_df['post_time'])
+                self.documents_df.set_index('post_time', inplace=True)
+
+            self.documents_df.sort_index(inplace=True)
+
+            # save documents_df to cache
+            if document_list is None and source_df is None and documents_csv_path is None:
+                print("DocsDataset: save documents_df to cache")
+                Cacher.cache('DocsDataset__documents_df', self.documents_df)
 
     def query_by_time(self, start_time: datetime | pd.Timestamp | str, end_time: datetime | pd.Timestamp | str) \
             -> IDocsDataset:

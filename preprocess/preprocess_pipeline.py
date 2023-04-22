@@ -21,45 +21,53 @@ from preprocess.keyword_extractor import IKeywordExtractor
 from preprocess.vectorlizer import IVectorlizer
 
 
-@dataclass
-class PreprocessPipeLineConfig:
-    docs_filterer: IDocsFilterer
-    docs_labeler: IDocsLabeler
-    keywords_extractor: IKeywordExtractor
-    vectorizer: IVectorlizer
-    fit_vectorizer: bool = True
-
-
 class PreprocessPipeline:
 
-    def __init__(self, config: PreprocessPipeLineConfig):
-        self.config = config
+    def __init__(self,
+                 docs_filterer: IDocsFilterer,
+                 docs_labeler: IDocsLabeler,
+                 keywords_extractor: IKeywordExtractor,
+                 vectorizer: IVectorlizer,
+                 ):
+        self.docs_filterer = docs_filterer
+        self.docs_labeler = docs_labeler
+        self.keywords_extractor = keywords_extractor
+        self.vectorizer = vectorizer
 
-    def preprocess(self, docs_dataset: IDocsDataset, stock: Stock, verbose=True) -> ILabeledDataset:
+    def preprocess(self, docs_dataset: IDocsDataset, stock: Stock, do_fit: bool = True,
+                   verbose=True) -> ILabeledDataset:
         """main preprocess pipe line function"""
 
         self.print_line(verbose=verbose)
         # filter documents
-        filtered_docs = self.config.docs_filterer.filter_documents(docs_dataset, stock, verbose=verbose)
+        if do_fit:
+            self.docs_filterer.fit(docs_dataset, stock, verbose=verbose)
+        filtered_docs = self.docs_filterer.filter_documents(docs_dataset, stock, verbose=verbose)
+        self.print_line(verbose=verbose, space_down=2)
 
         self.print_line(verbose=verbose)
         # label documents
-        docs_dataset = self.config.docs_labeler.label_documents(filtered_docs, stock, verbose=verbose)
+        docs_dataset = self.docs_labeler.label_documents(filtered_docs, stock, verbose=verbose)
+        self.print_line(verbose=verbose, space_down=2)
 
         self.print_line(verbose=verbose)
         # extract keywords
-        keyword_docs_dataset = self.config.keywords_extractor.extract_keywords(docs_dataset, verbose=verbose)
+        keyword_docs_dataset = self.keywords_extractor.extract_keywords(docs_dataset, verbose=verbose)
+        self.print_line(verbose=verbose, space_down=2)
 
         self.print_line(verbose=verbose)
         # fit vectorizer
-        if self.config.fit_vectorizer:
-            self.config.vectorizer.fit(keyword_docs_dataset, verbose=verbose)
+        if do_fit:
+            self.vectorizer.fit(keyword_docs_dataset, verbose=verbose)
         # convert keywords to vectors
-        vector_dataset = self.config.vectorizer.transform(keyword_docs_dataset, verbose=verbose)
+        vector_dataset = self.vectorizer.transform(keyword_docs_dataset, verbose=verbose)
+        self.print_line(verbose=verbose, space_down=2)
 
         return vector_dataset
 
-    def print_line(self, verbose=True):
+    def print_line(self, verbose=True, space_down=0):
         if verbose:
-            print()
-            print("=" * 30)
+            print("=" * 50)
+
+            for _ in range(space_down):
+                print()

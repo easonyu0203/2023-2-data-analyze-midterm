@@ -53,5 +53,9 @@ class FutureReturnDocsLabeler(IDocsLabeler):
             for document in queried_docs:
                 labels.append(1 if future_return > 0 else 0)
                 documents_list.append(document)
+                
+        if verbose:
+            # print remaining count
+            print(f"left with {len(labels)} documents after labeling")
 
         return LabelDataset(documents_list, labels)

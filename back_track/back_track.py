@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from datetime import timedelta, datetime
-from typing import Any
+from typing import Any, List
 
 import pandas as pd
 
 from datasets.docs_dataset import IDocsDataset
 from datasets.stock_dataset import Stock
-from preprocess.preprocess_pipeline import PreprocessPipeline, PreprocessPipeLineConfig
+from preprocess.preprocess_pipeline import PreprocessPipeline
 
 
 @dataclass
@@ -17,8 +17,9 @@ class BackTrackConfig:
     end_date: datetime  # the end date of the backtest
     train_span: timedelta  # the time span of the training set (day)
     inference_span: timedelta  # the time span of the inference set (day)
-    preprocessConfig: PreprocessPipeLineConfig  # the preprocessing pipeline config
-    take_shot_threshold: float  # the threshold of the take shot action (percentage)
+    preprocess_pipeline: PreprocessPipeline  # the preprocessing pipeline config
+    take_shot_threshold: float  # the threshold of the take shot action (percentage) ex. if 6 pos 4 neg => (6 - 4) / 10 = 0.2
+    return_no_move_threshold: float  # the threshold that below this we consider the return is no move (percentage)
 
 
 @dataclass
@@ -55,32 +56,40 @@ class BackTrack:
 
             # get the training dataset
             train_docs = self.config.docs_dataset.query_by_time(train_start_date, train_end_date)
-            train_preprocess = PreprocessPipeline(self.config.preprocessConfig)
-            train_dataset = train_preprocess.preprocess(train_docs, stock, verbose=False)
+            val_docs = self.config.docs_dataset.query_by_time(inference_start_date, inference_end_date)
+            # preprocess dataset
+            processed_train_dataset = self.config.preprocess_pipeline.preprocess(train_docs, stock, do_fit=True,
+                                                                                 verbose=False)
+            processed_val_dataset = self.config.preprocess_pipeline.preprocess(val_docs, stock, do_fit=False,
+                                                                               verbose=False)
 
             # train the model
-            X_train, y_train = zip(*train_dataset)
+            X_train, y_train = zip(*processed_train_dataset)
             model.fit(X_train, y_train)
 
-            # get the inference dataset
-            test_docs = self.config.docs_dataset.query_by_time(inference_start_date, inference_end_date)
+            # validate the model
             test_date = inference_start_date
             while test_date <= inference_end_date:
+                # check have future return percentage of the stock
+                if test_date not in future_returnes:
+                    # move to next day
+                    test_date += timedelta(days=1)
                 # get the documents of the day
                 single_date_docs = self.config.docs_dataset.query_by_time(test_date, test_date + timedelta(days=1))
-                # transform to dataset by training preprocess pipeline
-                single_date_dataset = [train_preprocess.single_doc_transform(doc) for doc in single_date_docs]
+                # preprocess the documents
+                processed_val_dataset = self.config.preprocess_pipeline.preprocess(val_docs, stock, do_fit=False,
+                                                                                   verbose=False)
                 # predict the future return percentage of the stock
-                predictions = model.predict(single_date_dataset)
-                # sum the predictions to get the predicted future return percentage of the stock
-                pred_future_return = sum(predictions)
+                X_val, y_val = zip(*processed_val_dataset)
+                predictions = model.predict(X_val)
+                pred_probas = model.predict_proba(X_val)
                 # take shot
-                shot = self.take_shot(pred_future_return, future_returnes[test_date])
+                shot = self.take_shot(predictions, pred_probas, future_returnes[test_date])
 
                 # record the result
                 shot_count += 1 if shot != 0 else 0
                 hit_count += 1 if shot == 1 else 0
-                opportunity_count += 1 if abs(pred_future_return) > self.config.take_shot_threshold else 0
+                opportunity_count += 1 if abs(future_returnes[test_date]) > self.config.return_no_move_threshold or shot else 0
 
                 # move to next day
                 test_date += timedelta(days=1)
@@ -92,15 +101,57 @@ class BackTrack:
     def get_future_return(self, stock: Stock) -> pd.Series:
         return stock.history_df['close'].pct_change(self.config.s).shift(-self.config.s) * 100
 
-    def take_shot(self, pred_future_return: float, ground_truth: float) -> int:
+    def take_shot(self, pred_future_return: List[float], pred_probas: List[float], ground_truth: float) -> int:
         """consider whether to take shot or not
             return 1 if take correct shot, -1 if wrong, 0 if no action"""
-        if abs(pred_future_return) <= self.config.take_shot_threshold:
+        if abs(sum(pred_future_return)/len(pred_future_return)) <= self.config.take_shot_threshold:
             return 0
 
         # pred correct
-        if pred_future_return * ground_truth > 0:
+        if sum(pred_future_return) * ground_truth > 0:
             return 1
         # pred wrong
         else:
             return -1
+
+
+from datasets.docs_dataset import DocsDataset
+from datasets.stock_dataset import StockMeta
+
+docs_dataset = DocsDataset()
+stock_meta = StockMeta("./organized_data/stock_metadata.csv")
+from preprocess.preprocess_pipeline import PreprocessPipeline
+from preprocess.docs_filterer import IDocsFilterer, StockNameFilterer, Word2VecSimilarFilterer
+from preprocess.docs_labeler import IDocsLabeler, FutureReturnDocsLabeler
+from preprocess.keyword_extractor import IKeywordExtractor, JiebaKeywordExtractor
+from preprocess.vectorlizer import IVectorlizer, KeywordsTfIdfVectorlizer
+from utils.data import random_split_train_val
+from sklearn.linear_model import LogisticRegression
+from sklearn_model_process.train_eval_model import train_eval_model, display_evaluation_result
+
+# set up config
+stock = stock_meta.get_stock_by_name("台積電")
+clf = LogisticRegression()
+preprocess_pipeline = PreprocessPipeline(
+    docs_filterer=Word2VecSimilarFilterer(topn=5, white_noise_ratio=0),
+    docs_labeler=FutureReturnDocsLabeler(s=3, threshold=5),
+    keywords_extractor=JiebaKeywordExtractor(),
+    vectorizer=KeywordsTfIdfVectorlizer(count_features=1000, pca_components=100)
+)
+
+config = BackTrackConfig(
+    s=3,
+    docs_dataset=docs_dataset,
+    start_date=datetime(2019, 1, 10),
+    end_date=datetime(2023, 1, 10),
+    train_span=timedelta(days=90),
+    inference_span=timedelta(days=30),
+    take_shot_threshold=0.1,
+    return_no_move_threshold=0.1,
+    preprocess_pipeline=preprocess_pipeline
+)
+
+# run backtest
+backtrack = BackTrack(config)
+result = backtrack.run(stock, clf)
+print(result)

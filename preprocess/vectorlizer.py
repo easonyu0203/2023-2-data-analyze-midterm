@@ -59,7 +59,7 @@ class KeywordsTfIdfVectorlizer(IVectorlizer):
         # transform the CountVectorizer output to a TF-IDF weighted matrix
         X_counts = self.count_vectorizer.transform(keywords_docs)
         X_counts_pca = self.pca.transform(X_counts.toarray())
-        X_tfidf = self.tfidf_transformer.transform(X_counts)
+        X_tfidf = self.tfidf_transformer.transform(X_counts_pca)
         vectors = X_tfidf.toarray()
 
         return LabelDataset(vectors, labeled_dataset.labels)
