@@ -175,7 +175,6 @@ class DbDocsDataset(IDocsDataset):
         if isinstance(end_time, str):
             end_time = datetime.fromisoformat(end_time)
 
-        docs = self.collection.find({"post_time": {"$gte": start_time, "$lt": end_time}})
         docs = [
             Document(
                 title=doc["title"],
@@ -184,7 +183,7 @@ class DbDocsDataset(IDocsDataset):
                 post_time=pd.to_datetime(doc["post_time"]),
                 keywords=doc.get("keywords", None),
             )
-            for doc in docs
+            for doc in self.collection.find({"post_time": {"$gte": str(start_time), "$lt": str(end_time)}})
         ]
         return DocsDataset(document_list=docs)
 

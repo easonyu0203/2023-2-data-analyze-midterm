@@ -60,3 +60,4 @@ class JiebaKeywordExtractor(IKeywordExtractor):
 
 if __name__ == "__main__":
     JiebaKeywordExtractor(topK=10)
+

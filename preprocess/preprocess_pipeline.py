@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from typing import List
 
 from datasets.docs_dataset import IDocsDataset
-from datasets.labeled_docs_dataset import ILabeledDataset
+from datasets.labeled_docs_dataset import ILabeledDataset, LabelDataset
 from datasets.stock_dataset import Stock
 from preprocess.docs_filterer import IDocsFilterer
 from preprocess.docs_labeler import IDocsLabeler
@@ -38,32 +38,37 @@ class PreprocessPipeline:
                    verbose=True) -> ILabeledDataset:
         """main preprocess pipe line function"""
 
-        self.print_line(verbose=verbose)
-        # filter documents
-        if do_fit:
-            self.docs_filterer.fit(docs_dataset, stock, verbose=verbose)
-        filtered_docs = self.docs_filterer.filter_documents(docs_dataset, stock, verbose=verbose)
-        self.print_line(verbose=verbose, space_down=2)
+        try:
+            self.print_line(verbose=verbose)
+            # filter documents
+            if do_fit:
+                self.docs_filterer.fit(docs_dataset, stock, verbose=verbose)
+            filtered_docs = self.docs_filterer.filter_documents(docs_dataset, stock, verbose=verbose)
+            self.print_line(verbose=verbose, space_down=2)
 
-        self.print_line(verbose=verbose)
-        # label documents
-        docs_dataset = self.docs_labeler.label_documents(filtered_docs, stock, verbose=verbose)
-        self.print_line(verbose=verbose, space_down=2)
+            self.print_line(verbose=verbose)
+            # label documents
+            docs_dataset = self.docs_labeler.label_documents(filtered_docs, stock, verbose=verbose)
+            self.print_line(verbose=verbose, space_down=2)
 
-        self.print_line(verbose=verbose)
-        # extract keywords
-        keyword_docs_dataset = self.keywords_extractor.extract_keywords(docs_dataset, verbose=verbose)
-        self.print_line(verbose=verbose, space_down=2)
+            self.print_line(verbose=verbose)
+            # extract keywords
+            keyword_docs_dataset = self.keywords_extractor.extract_keywords(docs_dataset, verbose=verbose)
+            self.print_line(verbose=verbose, space_down=2)
 
-        self.print_line(verbose=verbose)
-        # fit vectorizer
-        if do_fit:
-            self.vectorizer.fit(keyword_docs_dataset, verbose=verbose)
-        # convert keywords to vectors
-        vector_dataset = self.vectorizer.transform(keyword_docs_dataset, verbose=verbose)
-        self.print_line(verbose=verbose, space_down=2)
+            self.print_line(verbose=verbose)
+            # fit vectorizer
+            if do_fit:
+                self.vectorizer.fit(keyword_docs_dataset, verbose=verbose)
+            # convert keywords to vectors
+            vector_dataset = self.vectorizer.transform(keyword_docs_dataset, verbose=verbose)
+            self.print_line(verbose=verbose, space_down=2)
 
-        return vector_dataset
+            return vector_dataset
+        except ValueError as e:
+            if verbose:
+                print("WARNING EMPTY DATASET")
+            return LabelDataset([], [])
 
     def print_line(self, verbose=True, space_down=0):
         if verbose:
